@@ -80,6 +80,7 @@ def main():
     src_pcd.paint_uniform_color(get_color("custom_blue"))
     draw_geometries(ref_pcd, src_pcd)
     src_pcd = src_pcd.transform(estimated_transform)
+    np.save("src_points.npy", np.array(src_pcd.points))
     draw_geometries(ref_pcd, src_pcd)
 
     # compute error

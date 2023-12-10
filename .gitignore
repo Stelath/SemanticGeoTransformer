@@ -10,3 +10,12 @@ pretrained
 data/Kitti/downsampled
 data/ModelNet/*.pkl
 data/3DMatch/data/*
+
+*.bin
+*.npy
+data/**/*.txt
+data/**/*.png
+data/**/*.jpg
+data/**/*.zip
+
+*.bag

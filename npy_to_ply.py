@@ -2,6 +2,8 @@ import argparse
 import numpy as np
 import open3d as o3d
 
+from geotransformer.utils.pointcloud import apply_transform
+
 def use_o3d(pts, write_text, output_file):
     pcd = o3d.geometry.PointCloud()
 
@@ -16,6 +18,13 @@ def main(args):
     # Load the numpy pointcloud file
     pts = np.load(args.input_file)
 
+    if args.transform is not None:
+        # Load the transform
+        transform = np.load(args.transform)
+
+        # Apply the transform to the pointcloud
+        pts = apply_transform(pts, transform)
+
     # Create the PlyData object
     write_text = True
 
@@ -28,6 +37,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Convert a numpy pointcloud file to a ply file')
     parser.add_argument('-i', '--input_file', type=str, help='The input numpy file')
     parser.add_argument('-o', '--output_file', type=str, help='The output ply file')
+    parser.add_argument('-t', '--transform', type=str, help='The transform to apply to the pointcloud')
 
     # Parse the command line arguments
     args = parser.parse_args()

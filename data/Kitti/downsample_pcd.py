@@ -19,6 +19,7 @@ def main():
             pcd.points = o3d.utility.Vector3dVector(points)
             pcd = pcd.voxel_down_sample(0.3)
             points = np.array(pcd.points).astype(np.float32)
+            os.makedirs(osp.dirname(new_file_name), exist_ok=True)
             np.save(new_file_name, points)
 
 
