@@ -171,6 +171,7 @@ def registration_collate_fn_stack_mode(
     points_list = collated_dict.pop('ref_points') + collated_dict.pop('src_points')
     lengths = torch.LongTensor([points.shape[0] for points in points_list])
     points = torch.cat(points_list, dim=0)
+    transforms = torch.cat(collated_dict.pop('transform'), dim=0)
 
     if batch_size == 1:
         # remove wrapping brackets if batch_size is 1
@@ -178,6 +179,7 @@ def registration_collate_fn_stack_mode(
             collated_dict[key] = value[0]
 
     collated_dict['features'] = feats
+    collated_dict['transform'] = transforms
     if precompute_data:
         input_dict = precompute_data_stack_mode(points, lengths, num_stages, voxel_size, search_radius, neighbor_limits)
         collated_dict.update(input_dict)
