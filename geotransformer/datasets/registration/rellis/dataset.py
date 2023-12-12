@@ -2,6 +2,7 @@ import os.path as osp
 import random
 
 import numpy as np
+import torch
 import torch.utils.data
 
 from geotransformer.utils.common import load_pickle
@@ -14,12 +15,6 @@ from geotransformer.utils.registration import get_correspondences
 
 
 class OdometryRellisPairDataset(torch.utils.data.Dataset):
-    ODOMETRY_Rellis_DATA_SPLIT = {
-        'train': ['00', '01', '02', '03'],
-        'val': ['04'],
-        'test': ['04'],
-    }
-
     def __init__(
         self,
         dataset_root,
@@ -115,7 +110,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         data_dict['ref_feats'] = np.ones((ref_points.shape[0], 1), dtype=np.float32)
         data_dict['src_feats'] = np.ones((src_points.shape[0], 1), dtype=np.float32)
         data_dict['transform'] = transform.astype(np.float32)
-
+        
         return data_dict
 
     def __len__(self):
