@@ -14,13 +14,13 @@ def use_o3d(pts, write_text, output_file):
     # http://www.open3d.org/docs/release/python_api/open3d.io.write_point_cloud.html#open3d.io.write_point_cloud
     o3d.io.write_point_cloud(output_file, pcd, write_ascii=write_text)
 
-def main(args):
+def main(input_file, output_file, transform=None):
     # Load the numpy pointcloud file
-    pts = np.load(args.input_file)
+    pts = np.load(input_file)
 
-    if args.transform is not None:
+    if transform is not None:
         # Load the transform
-        transform = np.load(args.transform)
+        transform = np.load(transform)
 
         # Apply the transform to the pointcloud
         pts = apply_transform(pts, transform)
@@ -29,7 +29,7 @@ def main(args):
     write_text = True
 
     # Write the ply file
-    use_o3d(pts, write_text, args.output_file)
+    use_o3d(pts, write_text, output_file)
 
 
 if __name__ == '__main__':
@@ -42,4 +42,4 @@ if __name__ == '__main__':
     # Parse the command line arguments
     args = parser.parse_args()
 
-    main(args)
+    main(args.input_file, args.output_file, args.transform)
