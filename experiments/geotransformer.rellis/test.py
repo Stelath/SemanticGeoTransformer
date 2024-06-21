@@ -13,6 +13,9 @@ from dataset import test_data_loader
 from loss import Evaluator
 from model import create_model
 
+import os
+print("cwd:",os.getcwd)
+
 
 class Tester(SingleTester):
     def __init__(self, cfg):

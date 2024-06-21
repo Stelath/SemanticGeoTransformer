@@ -1,3 +1,6 @@
+import os
+print("cwd:", os.getcwd())
+
 import sys
 import json
 import argparse
@@ -49,12 +52,16 @@ def eval_one_epoch(args, cfg, logger):
     registration_meter.register_meter('rre')
     registration_meter.register_meter('rte')
 
+    print("features_root:", features_root)
+
     file_names = sorted(
         glob.glob(osp.join(features_root, '*.npz')),
         key=lambda x: [int(i) for i in osp.splitext(osp.basename(x))[0].split('_')],
     )
+    assert(len(file_names) > 0)
     num_test_pairs = len(file_names)
     for i, file_name in enumerate(file_names):
+        print("file_name:", file_name)
         seq_id, src_frame, ref_frame = [int(x) for x in osp.splitext(osp.basename(file_name))[0].split('_')]
 
         data_dict = np.load(file_name)
@@ -80,6 +87,7 @@ def eval_one_epoch(args, cfg, logger):
         message = '{}/{}, seq_id: {}, id0: {}, id1: {}'.format(i + 1, num_test_pairs, seq_id, src_frame, ref_frame)
 
         # 1. evaluate correspondences
+        print("Evaluating correspondences")
         # 1.1 evaluate coarse correspondences
         coarse_matching_result_dict = evaluate_sparse_correspondences(
             ref_nodes,

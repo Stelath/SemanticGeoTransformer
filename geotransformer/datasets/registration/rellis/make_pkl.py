@@ -94,7 +94,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create a metadata file for the RELLIS dataset')
     parser.add_argument('-d', '--dataset', type=str, help='The path to the dataset, formatted as outlined in the README.md', required=True)
     parser.add_argument('-s', '--spacing', type=int, help='The interval with which to sample the pointclouds', default=32)
-    parser.add_argument('-si', '--starting-indicies', type=list, help='The interval with which to sample the pointclouds', default=[0,])
+    parser.add_argument('-si', '--starting-indicies', type=list, help='The interval with which to sample the pointclouds', default=[0,8,16,24])
     parser.add_argument('--test-only', action='store_true', help='Only create the test metadata file')
 
     # Parse the command line arguments

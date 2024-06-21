@@ -9,16 +9,16 @@ echo "Starting"
 
 # >>> mamba initialize >>>
 # !! Contents within this block are managed by 'mamba init' !!
-export MAMBA_EXE="/home/korte/.local/bin/micromamba";
-export MAMBA_ROOT_PREFIX="/home/korte/micromamba";
+export MAMBA_EXE="/home/$USER/.local/bin/micromamba";
+export MAMBA_ROOT_PREFIX="/home/$USER/micromamba";
 __mamba_setup="$("$MAMBA_EXE" shell hook --shell bash --prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__mamba_setup"
 else
-    if [ -f "/home/korte/micromamba/etc/profile.d/micromamba.sh" ]; then
-        . "/home/korte/micromamba/etc/profile.d/micromamba.sh"
+    if [ -f "/home/$USER/micromamba/etc/profile.d/micromamba.sh" ]; then
+        . "/home/$USER/micromamba/etc/profile.d/micromamba.sh"
     else
-        export  PATH="/home/korte/micromamba/bin:$PATH"  # extra space after export prevents interference from conda init
+        export  PATH="/home/$USER/micromamba/bin:$PATH"  # extra space after export prevents interference from conda init
     fi
 fi
 unset __mamba_setup
@@ -27,4 +27,6 @@ unset __mamba_setup
 micromamba activate geotransformer
 
 cd experiments/geotransformer.rellis
+pwd | cat
+# export PYTHONPATH="/zfs/ailab/VIPR/GeoTransformer/:$PYTHONPATH"
 CUDA_VISIBLE_DEVICES=0 python trainval.py
