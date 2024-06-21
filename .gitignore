@@ -19,3 +19,5 @@ data/**/*.jpg
 data/**/*.zip
 
 *.bag
+
+reg_pointclouds/images/*
