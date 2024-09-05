@@ -14,6 +14,9 @@ from geotransformer.utils.pointcloud import (
 from geotransformer.utils.registration import get_correspondences
 
 
+
+
+
 class OdometryRellisPairDataset(torch.utils.data.Dataset):
     def __init__(
         self,
@@ -115,3 +118,22 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.metadata)
+
+
+class OdometryRellisPairDatasetNoGroundPlane(OdometryRellisPairDataset):
+    def __init__(self, *args, **kwargs):
+        super(OdometryRellisPairDatasetNoGroundPlane, self).__init__(*args, **kwargs)
+
+    def _load_point_cloud(self, file_name):
+        points = np.load(file_name)
+        if self.point_limit is not None and points.shape[0] > self.point_limit:
+            indices = np.random.permutation(points.shape[0])[: self.point_limit]
+            points = points[indices]
+        
+        # Filter out points within 1 standard deviation of the mean
+        z_mean = np.mean(points[:, 2])
+        z_std = np.std(points[:, 2])
+        mask = np.abs(points[:, 2] - z_mean) > z_std
+        points = points[mask]
+
+        return points

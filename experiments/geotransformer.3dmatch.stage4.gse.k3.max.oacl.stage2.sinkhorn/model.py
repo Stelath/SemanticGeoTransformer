@@ -32,17 +32,17 @@ class GeoTransformer(nn.Module):
             cfg.backbone.group_norm,
         )
 
-        self.transformer = GeometricTransformer(
-            cfg.geotransformer.input_dim,
-            cfg.geotransformer.output_dim,
-            cfg.geotransformer.hidden_dim,
-            cfg.geotransformer.num_heads,
-            cfg.geotransformer.blocks,
-            cfg.geotransformer.sigma_d,
-            cfg.geotransformer.sigma_a,
-            cfg.geotransformer.angle_k,
-            reduction_a=cfg.geotransformer.reduction_a,
-        )
+        # self.transformer = GeometricTransformer(
+        #     cfg.geotransformer.input_dim,
+        #     cfg.geotransformer.output_dim,
+        #     cfg.geotransformer.hidden_dim,
+        #     cfg.geotransformer.num_heads,
+        #     cfg.geotransformer.blocks,
+        #     cfg.geotransformer.sigma_d,
+        #     cfg.geotransformer.sigma_a,
+        #     cfg.geotransformer.angle_k,
+        #     reduction_a=cfg.geotransformer.reduction_a,
+        # )
 
         self.coarse_target = SuperPointTargetGenerator(
             cfg.coarse_matching.num_targets, cfg.coarse_matching.overlap_threshold
@@ -130,14 +130,18 @@ class GeoTransformer(nn.Module):
         feats_f = feats_list[0]
 
         # 3. Conditional Transformer
-        ref_feats_c = feats_c[:ref_length_c]
-        src_feats_c = feats_c[ref_length_c:]
-        ref_feats_c, src_feats_c = self.transformer(
-            ref_points_c.unsqueeze(0),
-            src_points_c.unsqueeze(0),
-            ref_feats_c.unsqueeze(0),
-            src_feats_c.unsqueeze(0),
-        )
+        # ref_feats_c = feats_c[:ref_length_c]
+        # src_feats_c = feats_c[ref_length_c:]
+        # ref_feats_c, src_feats_c = self.transformer(
+        #     ref_points_c.unsqueeze(0),
+        #     src_points_c.unsqueeze(0),
+        #     ref_feats_c.unsqueeze(0),
+        #     src_feats_c.unsqueeze(0),
+        # )
+        
+        # Utilize PTv3
+        
+        
         ref_feats_c_norm = F.normalize(ref_feats_c.squeeze(0), p=2, dim=1)
         src_feats_c_norm = F.normalize(src_feats_c.squeeze(0), p=2, dim=1)
 

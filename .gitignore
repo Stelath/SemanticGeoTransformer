@@ -21,3 +21,8 @@ data/**/*.zip
 *.bag
 
 reg_pointclouds/images/*
+
+weights202408/*
+output202408/*
+
+*.tar.gz

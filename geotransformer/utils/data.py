@@ -6,7 +6,6 @@ import torch
 from geotransformer.modules.ops import grid_subsample, radius_search
 from geotransformer.utils.torch import build_dataloader
 
-
 # Stack mode utilities
 
 
@@ -78,7 +77,7 @@ def precompute_data_stack_mode(points, lengths, num_stages, voxel_size, radius, 
 
 
 def single_collate_fn_stack_mode(
-    data_dicts, num_stages, voxel_size, search_radius, neighbor_limits, precompute_data=True
+    data_dicts, num_stages, voxel_size, search_radius, neighbor_limits, precompute_data=True, filter_ground_plane=False
 ):
     r"""Collate function for single point cloud in stack mode.
 
@@ -92,6 +91,7 @@ def single_collate_fn_stack_mode(
         search_radius (float)
         neighbor_limits (List[int])
         precompute_data (bool=True)
+        filter_ground_plane (bool=True)
 
     Returns:
         collated_dict (Dict)
@@ -125,6 +125,10 @@ def single_collate_fn_stack_mode(
     if normals is not None:
         collated_dict['normals'] = normals
     collated_dict['features'] = feats
+    
+    if filter_ground_plane:
+        points = remove_ground_plane(points, std_dev_threshold=1.0)
+    
     if precompute_data:
         input_dict = precompute_data_stack_mode(points, lengths, num_stages, voxel_size, search_radius, neighbor_limits)
         collated_dict.update(input_dict)
@@ -137,7 +141,7 @@ def single_collate_fn_stack_mode(
 
 
 def registration_collate_fn_stack_mode(
-    data_dicts, num_stages, voxel_size, search_radius, neighbor_limits, precompute_data=True
+    data_dicts, num_stages, voxel_size, search_radius, neighbor_limits, precompute_data=True, filter_ground_plane=False
 ):
     r"""Collate function for registration in stack mode.
 
@@ -151,6 +155,7 @@ def registration_collate_fn_stack_mode(
         search_radius (float)
         neighbor_limits (List[int])
         precompute_data (bool)
+        remove_ground_plane (bool=True)
 
     Returns:
         collated_dict (Dict)
@@ -180,6 +185,10 @@ def registration_collate_fn_stack_mode(
 
     collated_dict['features'] = feats
     collated_dict['transform'] = transforms
+    
+    if filter_ground_plane:
+        points = remove_ground_plane(points, std_dev_threshold=1.0)
+    
     if precompute_data:
         input_dict = precompute_data_stack_mode(points, lengths, num_stages, voxel_size, search_radius, neighbor_limits)
         collated_dict.update(input_dict)
