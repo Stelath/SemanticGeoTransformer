@@ -8,6 +8,7 @@ import torch.utils.data
 from geotransformer.utils.common import load_pickle
 from geotransformer.utils.pointcloud import (
     random_sample_rotation,
+    random_sample_rotation_z_priority,
     get_transform_from_rotation_translation,
     get_rotation_translation_from_transform,
 )
@@ -31,7 +32,11 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         augmentation_rotation=1.0,
         return_corr_indices=False,
         matching_radius=None,
+        augmentation_z_priority_rotation=False,  # Added by Ethan, 9/6/2024 at 8:32pm
     ):
+        # Give a warning if z priority is true
+        if augmentation_z_priority_rotation:
+            print("Warning: z priority rotation is enabled!!! Is this intentional?")  # Added by Ethan, 9/6/2024 at 8:43pm
         super(OdometryRellisPairDataset, self).__init__()
 
         self.dataset_root = dataset_root
@@ -44,6 +49,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         self.augmentation_max_scale = augmentation_max_scale
         self.augmentation_shift = augmentation_shift
         self.augmentation_rotation = augmentation_rotation
+        self.augmentation_z_priority_rotation = augmentation_z_priority_rotation  # Added by Ethan, 9/6/2024 at 8:32pm
 
         self.return_corr_indices = return_corr_indices
         self.matching_radius = matching_radius
@@ -58,7 +64,12 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         ref_points = ref_points + (np.random.rand(ref_points.shape[0], 3) - 0.5) * self.augmentation_noise
         src_points = src_points + (np.random.rand(src_points.shape[0], 3) - 0.5) * self.augmentation_noise
         # random rotation
-        aug_rotation = random_sample_rotation(self.augmentation_rotation)
+
+        if not self.augmentation_z_priority_rotation:
+            aug_rotation = random_sample_rotation(self.augmentation_rotation)
+        else:
+            aug_rotation = random_sample_rotation_z_priority(self.augmentation_rotation)
+                                                             
         if random.random() > 0.5:
             ref_points = np.matmul(ref_points, aug_rotation.T)
             rotation = np.matmul(aug_rotation, rotation)

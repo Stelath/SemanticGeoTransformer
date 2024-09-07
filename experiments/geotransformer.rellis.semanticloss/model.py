@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from IPython import embed
 
-import numpy as np
-
 from geotransformer.modules.ops import point_to_node_partition, index_select
 from geotransformer.modules.registration import get_node_correspondences
 from geotransformer.modules.sinkhorn import LearnableLogOptimalTransport
@@ -70,25 +68,20 @@ class GeoTransformer(nn.Module):
 
     def forward(self, data_dict):
         output_dict = {}
-      
-        # THIS IS FOR DEBUG ONLY, IT SAVES A POINTCLOUD SO WE CAN LOAD IT IN OPEN 3D TO SEE IF THE FILTERING IS WORKING
-        # np.save('./POINTCLOUD_AFTER.npy', data_dict['points'][0].cpu().numpy(), allow_pickle=True)
 
         # Downsample point clouds
         feats = data_dict['features'].detach()
-        transform = data_dict['transform'].detach()  # GT maybe?
+        transform = data_dict['transform'].detach()
 
-        ref_length_c = data_dict['lengths'][-1][0].item()  # Coarse level
-        ref_length_f = data_dict['lengths'][1][0].item()  # Fine level
+        ref_length_c = data_dict['lengths'][-1][0].item()
+        ref_length_f = data_dict['lengths'][1][0].item()
         ref_length = data_dict['lengths'][0][0].item()
-        points_c = data_dict['points'][-1].detach()  # [993, 3] 
-        points_f = data_dict['points'][1].detach() # [18754, 3]
-        points = data_dict['points'][0].detach()  # [51695, 3]
+        points_c = data_dict['points'][-1].detach()
+        points_f = data_dict['points'][1].detach()
+        points = data_dict['points'][0].detach()
 
-        print(points.shape)
-
-        ref_points_c = points_c[:ref_length_c]  # ref = first pnt cld
-        src_points_c = points_c[ref_length_c:]  # src = second pnt cld 
+        ref_points_c = points_c[:ref_length_c]
+        src_points_c = points_c[ref_length_c:]
         ref_points_f = points_f[:ref_length_f]
         src_points_f = points_f[ref_length_f:]
         ref_points = points[:ref_length]

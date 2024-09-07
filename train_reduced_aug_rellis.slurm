@@ -2,7 +2,7 @@
 
 #SBATCH --job-name rellis-filtered_train 
 #SBATCH --mem 250gb
-#SBATCH --time 25:00:00
+#SBATCH --time 10:00:00
 #SBATCH --gpus a100:1
 #SBATCH --nodes 1
 #SBATCH --cpus-per-task 64
@@ -16,4 +16,4 @@ APPTAINER_PATH="/project/niyanil/ailab/Tools/bin:$PATH"
 HF_HOME="/project/nianyil/ailab/Tools/huggingface"
 
 # Run Apptainer with ailab & micromamba mounted + Nvidia Support
-apptainer run --nv --env "PATH=$APPTAINER_PATH" --env "HF_HOME=$HF_HOME" -B /project/nianyil/ailab:/project/nianyil/ailab -B /project/nianyil/ailab/Tools/micromamba:$HOME/micromamba -B $TMPDIR:$TMPDIR -B /scratch/$USER:/scratch/$USER /project/nianyil/ailab/Tools/ubuntu.sif bash /project/bli4/maps/wacv/GeoTransformer/rellis_filtered_micromamba.sh
+apptainer run --nv --env "PATH=$APPTAINER_PATH" --env "HF_HOME=$HF_HOME" -B /project/nianyil/ailab:/project/nianyil/ailab -B /project/nianyil/ailab/Tools/micromamba:$HOME/micromamba -B $TMPDIR:$TMPDIR -B /scratch/$USER:/scratch/$USER /project/nianyil/ailab/Tools/ubuntu.sif bash /project/bli4/maps/wacv/GeoTransformer/rellis_reduced_aug.sh
