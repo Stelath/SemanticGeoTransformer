@@ -1,6 +1,6 @@
-from geotransformer.datasets.registration.kitti.dataset import OdometryKittiPairDataset
+from geotransformer.datasets.registration.rellis.dataset import OdometryRellisPairDataset
 
 
 __all__ = [
-    'OdometryKittiPairDataset',
+    'OdometryRellisPairDataset',
 ]

@@ -116,13 +116,13 @@ def random_sample_rotation(rotation_factor: float = 1.0) -> np.ndarray:
     return rotation
 
 # Added by Ethan, 9/6/2024 at 8:29pm
-def random_sample_rotation_z_priority(rotation_factor: float = 1.0) -> np.ndarray:
+def random_sample_rotation_z_priority(rotation_factor: float = 1.0, xy_rotation_factor: float = 0.1) -> np.ndarray:
     # Show spin the point cloud like a top or dreidel. Like a chef spinning a pizza dough.
     # Only rotates in the other directions a little bit.
     # angle_z, angle_y, angle_x
     euler = np.random.rand(3) * np.pi * 2 / rotation_factor  # (0, 2 * pi / rotation_range)
-    euler[1] *= 0.1
-    euler[2] *= 0.1
+    euler[1] *= xy_rotation_factor
+    euler[2] *= xy_rotation_factor
     rotation = Rotation.from_euler('zyx', euler).as_matrix()
     return rotation
 

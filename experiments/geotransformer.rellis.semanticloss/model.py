@@ -93,8 +93,31 @@ class GeoTransformer(nn.Module):
         output_dict['src_points_f'] = src_points_f
         output_dict['ref_points'] = ref_points
         output_dict['src_points'] = src_points
+        
+        if 'labels' in data_dict:
+            labels_c = data_dict['labels'][-1].detach()
+            labels_f = data_dict['labels'][1].detach()
+            labels = data_dict['labels'][0].detach()
+            
+            ref_labels_c = labels_c[:ref_length_c]
+            src_labels_c = labels_c[ref_length_c:]
+            ref_labels_f = labels_f[:ref_length_f]
+            src_labels_f = labels_f[ref_length_f:]
+            ref_labels = labels[:ref_length]
+            src_labels = labels[ref_length:]
+            
+            output_dict['ref_labels_c'] = ref_labels_c
+            output_dict['src_labels_c'] = src_labels_c
+            output_dict['ref_labels_f'] = ref_labels_f
+            output_dict['src_labels_f'] = src_labels_f
+            output_dict['ref_labels'] = ref_labels
+            output_dict['src_labels'] = src_labels
+        
+        print("ALL THE SHAPES")
+        print(ref_points_c.shape, src_points_c.shape, ref_points_f.shape, src_points_f.shape, ref_points.shape, src_points.shape)
 
-        # 1. Generate ground truth node correspondences
+
+        # 1. Generate ground truth node correspondences, include laebls if provided
         _, ref_node_masks, ref_node_knn_indices, ref_node_knn_masks = point_to_node_partition(
             ref_points_f, ref_points_c, self.num_points_in_patch
         )
@@ -106,6 +129,13 @@ class GeoTransformer(nn.Module):
         src_padded_points_f = torch.cat([src_points_f, torch.zeros_like(src_points_f[:1])], dim=0)
         ref_node_knn_points = index_select(ref_padded_points_f, ref_node_knn_indices, dim=0)
         src_node_knn_points = index_select(src_padded_points_f, src_node_knn_indices, dim=0)
+        
+        if 'labels' in data_dict:
+            ref_padded_labels_f = torch.cat([ref_labels_f, torch.zeros_like(ref_labels_f[:1])], dim=0)
+            src_padded_labels_f = torch.cat([src_labels_f, torch.zeros_like(src_labels_f[:1])], dim=0)
+            ref_node_knn_labels = index_select(ref_padded_labels_f, ref_node_knn_indices, dim=0)
+            src_node_knn_labels = index_select(src_padded_labels_f, src_node_knn_indices, dim=0)
+            
 
         gt_node_corr_indices, gt_node_corr_overlaps = get_node_correspondences(
             ref_points_c,

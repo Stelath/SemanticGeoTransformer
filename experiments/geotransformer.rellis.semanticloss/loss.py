@@ -51,6 +51,8 @@ class FineMatchingLoss(nn.Module):
         src_node_corr_knn_masks = output_dict['src_node_corr_knn_masks']
         matching_scores = output_dict['matching_scores']
         transform = data_dict['transform']
+        
+        print(len(ref_node_corr_knn_points))
 
         src_node_corr_knn_points = apply_transform(src_node_corr_knn_points, transform)
         dists = pairwise_distance(ref_node_corr_knn_points, src_node_corr_knn_points)  # (B, N, M)

@@ -34,7 +34,7 @@ _C.data.dataset_root = osp.join(_C.root_dir, 'data', 'Rellis')
 
 # train data
 _C.train = edict()
-_C.train.batch_size = 2
+_C.train.batch_size = 1
 _C.train.num_workers = 16
 _C.train.point_limit = 30000
 _C.train.use_augmentation = True
@@ -75,7 +75,7 @@ _C.optim.grad_acc_steps = 1
 
 # model - backbone
 _C.backbone = edict()
-_C.backbone.num_stages = 5
+_C.backbone.num_stages = 4
 _C.backbone.init_voxel_size = 0.3
 _C.backbone.kernel_size = 15
 _C.backbone.base_radius = 4.25
@@ -102,8 +102,8 @@ _C.coarse_matching.dual_normalization = True
 
 # model - GeoTransformer
 _C.geotransformer = edict()
-_C.geotransformer.input_dim = 2048
-_C.geotransformer.hidden_dim = 128
+_C.geotransformer.input_dim = 1024
+_C.geotransformer.hidden_dim = 256
 _C.geotransformer.output_dim = 256
 _C.geotransformer.num_heads = 4
 _C.geotransformer.blocks = ['self', 'cross', 'self', 'cross', 'self', 'cross']

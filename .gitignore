@@ -17,6 +17,9 @@ data/**/*.txt
 data/**/*.png
 data/**/*.jpg
 data/**/*.zip
+data/**/*.label
+
+gif_temp/*
 
 *.bag
 
@@ -26,3 +29,5 @@ weights202408/*
 output202408/*
 
 *.tar.gz
+
+.slurm.**

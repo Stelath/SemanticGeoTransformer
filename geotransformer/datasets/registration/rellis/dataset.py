@@ -30,9 +30,11 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         augmentation_max_scale=1.2,
         augmentation_shift=2.0,
         augmentation_rotation=1.0,
+        augmentation_xy_rotation=0.1,
         return_corr_indices=False,
         matching_radius=None,
         augmentation_z_priority_rotation=False,  # Added by Ethan, 9/6/2024 at 8:32pm
+        semantic_labels=False,  # Passes semantic data alongside 3D point cloud data
     ):
         # Give a warning if z priority is true
         if augmentation_z_priority_rotation:
@@ -50,6 +52,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         self.augmentation_shift = augmentation_shift
         self.augmentation_rotation = augmentation_rotation
         self.augmentation_z_priority_rotation = augmentation_z_priority_rotation  # Added by Ethan, 9/6/2024 at 8:32pm
+        self.augmentation_xy_rotation = augmentation_xy_rotation
 
         self.return_corr_indices = return_corr_indices
         self.matching_radius = matching_radius
@@ -68,7 +71,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         if not self.augmentation_z_priority_rotation:
             aug_rotation = random_sample_rotation(self.augmentation_rotation)
         else:
-            aug_rotation = random_sample_rotation_z_priority(self.augmentation_rotation)
+            aug_rotation = random_sample_rotation_z_priority(self.augmentation_rotation, self.augmentation_xy_rotation)
                                                              
         if random.random() > 0.5:
             ref_points = np.matmul(ref_points, aug_rotation.T)
@@ -141,10 +144,10 @@ class OdometryRellisPairDatasetNoGroundPlane(OdometryRellisPairDataset):
             indices = np.random.permutation(points.shape[0])[: self.point_limit]
             points = points[indices]
         
-        # Filter out points within 1 standard deviation of the mean
+        # Filter out points within 1/2 standard deviation of the mean
         z_mean = np.mean(points[:, 2])
         z_std = np.std(points[:, 2])
-        mask = np.abs(points[:, 2] - z_mean) > z_std
+        mask = np.abs(points[:, 2] - z_mean) > z_std * .5
         points = points[mask]
 
         return points
