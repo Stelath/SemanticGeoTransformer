@@ -130,23 +130,34 @@ class SSRPEConditionalTransformer(nn.Module):
     ):
         super(RPEConditionalTransformer, self).__init__()
         self.blocks = blocks
-        layers = []
+        geo_layers = []
+        sem_layers = []
         for block in self.blocks:
             _check_block_type(block)
             if block == 'self':
-                layers.append(RPETransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
+                geo_layers.append(RPETransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
+                sem_layers.append(RPETransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
             elif block == 'cross':
-                layers.append(TransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
-        self.layers = nn.ModuleList(layers)
+                geo_layers.append(TransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
+            elif block == 'sem-cross':
+                sem_layers.append(TransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
+        self.geo_layers = nn.ModuleList(geo_layers)
+        self.sem_layers = nn.ModuleList(sem_layers)
         self.return_attention_scores = return_attention_scores
         self.parallel = parallel
 
-    def forward(self, feats0, feats1, feats2, feats3, embeddings0, embeddings1, masks0=None, masks1=None):
+    def forward(self, feats0, feats1, sem0, sem1, embeddings0, embeddings1, masks0=None, masks1=None):
         attention_scores = []
         for i, block in enumerate(self.blocks):
             if block == 'self':
+                # Geometric Self-Attention
                 feats0, scores0 = self.layers[i](feats0, feats0, embeddings0, memory_masks=masks0)
                 feats1, scores1 = self.layers[i](feats1, feats1, embeddings1, memory_masks=masks1)
+                
+                # Semantic Self-Attention
+                sem0_self, sem_scores0 = self.layers[i](sem0, sem0, embeddings0, memory_masks=masks0)
+                sem1_self, sem_scores1 = self.layers[i](sem1, sem1, embeddings1, memory_masks=masks1)
+                
             elif block == 'cross':
                 if self.parallel:
                     new_feats0, scores0 = self.layers[i](feats0, feats1, memory_masks=masks1)
@@ -157,11 +168,17 @@ class SSRPEConditionalTransformer(nn.Module):
                     feats0, scores0 = self.layers[i](feats0, feats1, memory_masks=masks1)
                     feats1, scores1 = self.layers[i](feats1, feats0, memory_masks=masks0)
             elif block == 'sem-cross':
-                feats0, scores0 = self.layers[i](feats0, feats1, memory_masks=masks1)
-                feats1, scores1 = self.layers[i](feats1, feats0, memory_masks=masks0)
+                if self.parallel:
+                    new_feats0, scores0 = self.layers[i](sem0_self, feats0, memory_masks=masks1)
+                    new_feats1, scores1 = self.layers[i](sem1_self, feats1, memory_masks=masks0)
+                    feats0 = new_feats0
+                    feats1 = new_feats1
+                else:    
+                    feats0, scores0 = self.layers[i](sem0_self, feats0, memory_masks=masks1)
+                    feats1, scores1 = self.layers[i](sem1_self, feats1, memory_masks=masks0)
             
             if self.return_attention_scores:
-                attention_scores.append([scores0, scores1])
+                attention_scores.append([scores0, scores1, sem_scores0, sem_scores1])
         if self.return_attention_scores:
             return feats0, feats1, attention_scores
         else:
