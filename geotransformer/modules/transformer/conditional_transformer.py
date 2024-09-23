@@ -136,7 +136,7 @@ class SSRPEConditionalTransformer(nn.Module):
             _check_block_type(block)
             if block == 'self':
                 geo_layers.append(RPETransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
-                sem_layers.append(RPETransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
+                sem_layers.append(TransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
             elif block == 'cross':
                 geo_layers.append(TransformerLayer(d_model, num_heads, dropout=dropout, activation_fn=activation_fn))
             elif block == 'sem-cross':
@@ -155,8 +155,8 @@ class SSRPEConditionalTransformer(nn.Module):
                 feats1, scores1 = self.layers[i](feats1, feats1, embeddings1, memory_masks=masks1)
                 
                 # Semantic Self-Attention
-                sem0_self, sem_scores0 = self.layers[i](sem0, sem0, embeddings0, memory_masks=masks0)
-                sem1_self, sem_scores1 = self.layers[i](sem1, sem1, embeddings1, memory_masks=masks1)
+                sem0_self, sem_scores0 = self.layers[i](sem0, sem0, memory_masks=masks0)
+                sem1_self, sem_scores1 = self.layers[i](sem1, sem1, memory_masks=masks1)
                 
             elif block == 'cross':
                 if self.parallel:
