@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from geotransformer.modules.ops import pairwise_distance
-from geotransformer.modules.transformer import SinusoidalPositionalEmbedding, RPEConditionalTransformer
+from geotransformer.modules.transformer import SinusoidalPositionalEmbedding, RPEConditionalTransformer, SSRPEConditionalTransformer
 
 
 class GeometricStructureEmbedding(nn.Module):
@@ -86,6 +86,7 @@ class GeometricTransformer(nn.Module):
         dropout=None,
         activation_fn='ReLU',
         reduction_a='max',
+        semantic_transformer=False,
     ):
         r"""Geometric Transformer (GeoTransformer).
 
@@ -102,13 +103,20 @@ class GeometricTransformer(nn.Module):
             reduction_a: reduction mode of angular embedding ['max', 'mean']
         """
         super(GeometricTransformer, self).__init__()
+        self.semantic_transformer = semantic_transformer
 
         self.embedding = GeometricStructureEmbedding(hidden_dim, sigma_d, sigma_a, angle_k, reduction_a=reduction_a)
 
         self.in_proj = nn.Linear(input_dim, hidden_dim)
-        self.transformer = RPEConditionalTransformer(
-            blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
-        )
+        if self.semantic_transformer:
+            self.sem_in_proj = nn.Linear(input_dim, hidden_dim)
+            self.transformer = SSRPEConditionalTransformer(
+                blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
+            )
+        else:
+            self.transformer = RPEConditionalTransformer(
+                blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
+            )
         self.out_proj = nn.Linear(hidden_dim, output_dim)
 
     def forward(
@@ -119,6 +127,8 @@ class GeometricTransformer(nn.Module):
         src_feats,
         ref_masks=None,
         src_masks=None,
+        ref_sem=None,
+        src_sem=None,
     ):
         r"""Geometric Transformer
 
@@ -139,15 +149,31 @@ class GeometricTransformer(nn.Module):
 
         ref_feats = self.in_proj(ref_feats)
         src_feats = self.in_proj(src_feats)
+        
+        if self.semantic_transformer:
+            ref_sem = self.in_proj(ref_sem)
+            src_sem = self.in_proj(src_sem)
 
-        ref_feats, src_feats = self.transformer(
-            ref_feats,
-            src_feats,
-            ref_embeddings,
-            src_embeddings,
-            masks0=ref_masks,
-            masks1=src_masks,
-        )
+        if self.semantic_transformer:
+            ref_feats, src_feats = self.transformer(
+                ref_feats,
+                src_feats,
+                ref_embeddings,
+                src_embeddings,
+                ref_sem=ref_sem,
+                src_sem=src_sem,
+                masks0=ref_masks,
+                masks1=src_masks,
+            )
+        else:
+            ref_feats, src_feats = self.transformer(
+                ref_feats,
+                src_feats,
+                ref_embeddings,
+                src_embeddings,
+                masks0=ref_masks,
+                masks1=src_masks,
+            )
 
         ref_feats = self.out_proj(ref_feats)
         src_feats = self.out_proj(src_feats)
