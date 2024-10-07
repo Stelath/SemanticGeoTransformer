@@ -13,6 +13,7 @@ data/3DMatch/data/*
 
 *.bin
 *.npy
+*.png
 data/**/*.txt
 data/**/*.png
 data/**/*.jpg
@@ -30,4 +31,8 @@ output202408/*
 
 *.tar.gz
 
-.slurm.**
+*.slurm.e*
+*.slurm.o*
+*.out
+
+data/tartan_drive_2/sequences/*

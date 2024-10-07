@@ -2,19 +2,38 @@ import os.path as osp
 import random
 
 import numpy as np
-import torch
 import torch.utils.data
 
 from geotransformer.utils.common import load_pickle
 from geotransformer.utils.pointcloud import (
     random_sample_rotation,
-    random_sample_rotation_z_priority,
     get_transform_from_rotation_translation,
     get_rotation_translation_from_transform,
 )
 from geotransformer.utils.registration import get_correspondences
 
-class OdometryRellisPairDataset(torch.utils.data.Dataset):
+def apply_transform(points: np.ndarray, transform: np.ndarray, normals = None):
+    rotation = transform[:3, :3]
+    translation = transform[:3, 3]
+    points = np.matmul(points, rotation.T) + translation
+    if normals is not None:
+        normals = np.matmul(normals, rotation.T)
+        return points, normals
+    else:
+        return points
+
+def save_transform(p1, p2, transform):
+    """
+    Saves the two point clouds with their transformation to a file.
+    """
+    print("WARNING: SAVING TRANSFORMED POINT CLOUDS -- THIS SLOWS DOWN THE PROCESS")
+    p2 = apply_transform(p2, transform)
+    np.save("p1.npy", p1)
+    np.save("p2.npy", p2)
+
+
+class OdometryTartan2PairDataset(torch.utils.data.Dataset):
+
     def __init__(
         self,
         dataset_root,
@@ -26,16 +45,10 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         augmentation_max_scale=1.2,
         augmentation_shift=2.0,
         augmentation_rotation=1.0,
-        augmentation_xy_rotation=0.1,
         return_corr_indices=False,
         matching_radius=None,
-        augmentation_z_priority_rotation=False,  # Added by Ethan, 9/6/2024 at 8:32pm
-        semantic_labels=False,  # Passes semantic data alongside 3D point cloud data
     ):
-        # Give a warning if z priority is true
-        if augmentation_z_priority_rotation:
-            print("Warning: z priority rotation is enabled!!! Is this intentional?")  # Added by Ethan, 9/6/2024 at 8:43pm
-        super(OdometryRellisPairDataset, self).__init__()
+        super(OdometryTartan2PairDataset, self).__init__()
 
         self.dataset_root = dataset_root
         self.subset = subset
@@ -47,9 +60,6 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         self.augmentation_max_scale = augmentation_max_scale
         self.augmentation_shift = augmentation_shift
         self.augmentation_rotation = augmentation_rotation
-        self.augmentation_z_priority_rotation = augmentation_z_priority_rotation  # Added by Ethan, 9/6/2024 at 8:32pm
-        self.augmentation_xy_rotation = augmentation_xy_rotation
-        self.semantic_labels = semantic_labels
 
         self.return_corr_indices = return_corr_indices
         self.matching_radius = matching_radius
@@ -57,6 +67,8 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
             raise ValueError('"matching_radius" is None but "return_corr_indices" is set.')
 
         self.metadata = load_pickle(osp.join(self.dataset_root, 'metadata', f'{subset}.pkl'))
+        # Only keep the first 200 pairs for debugging
+        self.metadata = self.metadata[:200]
 
     def _augment_point_cloud(self, ref_points, src_points, transform):
         rotation, translation = get_rotation_translation_from_transform(transform)
@@ -64,12 +76,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         ref_points = ref_points + (np.random.rand(ref_points.shape[0], 3) - 0.5) * self.augmentation_noise
         src_points = src_points + (np.random.rand(src_points.shape[0], 3) - 0.5) * self.augmentation_noise
         # random rotation
-
-        if not self.augmentation_z_priority_rotation:
-            aug_rotation = random_sample_rotation(self.augmentation_rotation)
-        else:
-            aug_rotation = random_sample_rotation_z_priority(self.augmentation_rotation, self.augmentation_xy_rotation)
-                                                             
+        aug_rotation = random_sample_rotation(self.augmentation_rotation)
         if random.random() > 0.5:
             ref_points = np.matmul(ref_points, aug_rotation.T)
             rotation = np.matmul(aug_rotation, rotation)
@@ -99,13 +106,6 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
             indices = np.random.permutation(points.shape[0])[: self.point_limit]
             points = points[indices]
         return points
-    
-    def _load_semantic_point_cloud(self, file_name):
-        points = np.load(file_name)
-        if self.point_limit is not None and points.shape[0] > self.point_limit:
-            indices = np.random.permutation(points.shape[0])[: self.point_limit]
-            points = points[indices]
-        return points
 
     def __getitem__(self, index):
         data_dict = {}
@@ -115,24 +115,16 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         data_dict['ref_frame'] = metadata['frame0']
         data_dict['src_frame'] = metadata['frame1']
 
-       
-
-        if not self.semantic_labels:
-            ref_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
-            src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
-        else:
-            ref_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
-            src_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
-            
-            ref_labels = ref_points[:, 3]
-            src_labes = src_points[:, 3]
-            ref_points = ref_points[:, :3]
-            src_points = src_points[:, :3]
-
-        print("num points: ", ref_points.shape[0], src_points.shape[0])
-        
+        # ref_points = 
+        # src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pc1']))
+        ref_points = self._load_point_cloud(osp.join(metadata['pc0']))
+        src_points = self._load_point_cloud(osp.join(metadata['pc1']))
         transform = metadata['transform']
-        
+
+        # print("num points: ", ref_points.shape[0], src_points.shape[0])
+
+        # save_transform(ref_points, src_points, transform)
+
         if self.use_augmentation:
             ref_points, src_points, transform = self._augment_point_cloud(ref_points, src_points, transform)
 
@@ -145,31 +137,8 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         data_dict['ref_feats'] = np.ones((ref_points.shape[0], 1), dtype=np.float32)
         data_dict['src_feats'] = np.ones((src_points.shape[0], 1), dtype=np.float32)
         data_dict['transform'] = transform.astype(np.float32)
-        
-        if self.semantic_labels:
-            data_dict['ref_labels'] = ref_labels.astype(np.uint16)
-            data_dict['src_labels'] = src_labes.astype(np.uint16)
-        
+
         return data_dict
 
     def __len__(self):
         return len(self.metadata)
-
-
-class OdometryRellisPairDatasetNoGroundPlane(OdometryRellisPairDataset):
-    def __init__(self, *args, **kwargs):
-        super(OdometryRellisPairDatasetNoGroundPlane, self).__init__(*args, **kwargs)
-
-    def _load_point_cloud(self, file_name):
-        points = np.load(file_name)
-        if self.point_limit is not None and points.shape[0] > self.point_limit:
-            indices = np.random.permutation(points.shape[0])[: self.point_limit]
-            points = points[indices]
-        
-        # Filter out points within 1/2 standard deviation of the mean
-        z_mean = np.mean(points[:, 2])
-        z_std = np.std(points[:, 2])
-        mask = np.abs(points[:, 2] - z_mean) > z_std * .5
-        points = points[mask]
-
-        return points

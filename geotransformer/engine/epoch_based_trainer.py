@@ -12,6 +12,24 @@ from geotransformer.utils.summary_board import SummaryBoard
 from geotransformer.utils.timer import Timer
 from geotransformer.utils.common import get_log_string
 
+def get_tensor_size(tensor):
+    return tensor.element_size() * tensor.nelement()
+
+def print_data_dict_size(data_dict):
+    total_size = 0
+    for key, value in data_dict.items():
+        if isinstance(value, torch.Tensor):
+            tensor_size = get_tensor_size(value)
+            print(f"Key: {key}, Tensor size: {tensor_size / (1024**2):.2f} MB")
+            total_size += tensor_size
+        elif isinstance(value, dict):
+            # If your data_dict has nested dictionaries
+            for nested_key, nested_value in value.items():
+                if isinstance(nested_value, torch.Tensor):
+                    tensor_size = get_tensor_size(nested_value)
+                    print(f"Key: {key} -> {nested_key}, Tensor size: {tensor_size / (1024**2):.2f} MB")
+                    total_size += tensor_size
+    print(f"Total data_dict size: {total_size / (1024**2):.2f} MB")
 
 class EpochBasedTrainer(BaseTrainer):
     def __init__(
@@ -98,11 +116,14 @@ class EpochBasedTrainer(BaseTrainer):
             self.after_backward(self.epoch, self.inner_iteration, data_dict, output_dict, result_dict)
             self.check_gradients(self.epoch, self.inner_iteration, data_dict, output_dict, result_dict)
             self.optimizer_step(self.inner_iteration)
+
             # after training
             self.timer.add_process_time()
             self.after_train_step(self.epoch, self.inner_iteration, data_dict, output_dict, result_dict)
             result_dict = self.release_tensors(result_dict)
             self.summary_board.update_from_result_dict(result_dict)
+
+            # print(torch.cuda.memory_summary())
             # logging
             if self.inner_iteration % self.log_steps == 0:
                 summary_dict = self.summary_board.summary()
