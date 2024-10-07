@@ -17,6 +17,7 @@ def train_valid_data_loader(cfg, distributed):
         augmentation_max_scale=cfg.train.augmentation_max_scale,
         augmentation_shift=cfg.train.augmentation_shift,
         augmentation_rotation=cfg.train.augmentation_rotation,
+        semantic_labels=True
     )
     neighbor_limits = calibrate_neighbors_stack_mode(
         train_dataset,
@@ -43,6 +44,7 @@ def train_valid_data_loader(cfg, distributed):
         'val',
         point_limit=cfg.test.point_limit,
         use_augmentation=False,
+        semantic_labels=True
     )
     valid_loader = build_dataloader_stack_mode(
         valid_dataset,
@@ -71,6 +73,7 @@ def test_data_loader(cfg):
         augmentation_max_scale=cfg.train.augmentation_max_scale,
         augmentation_shift=cfg.train.augmentation_shift,
         augmentation_rotation=cfg.train.augmentation_rotation,
+        semantic_labels=True
     )
     neighbor_limits = calibrate_neighbors_stack_mode(
         train_dataset,
@@ -85,6 +88,7 @@ def test_data_loader(cfg):
         'test',
         point_limit=cfg.test.point_limit,
         use_augmentation=False,
+        semantic_labels=True
     )
     test_loader = build_dataloader_stack_mode(
         test_dataset,

@@ -42,6 +42,7 @@ class GeoTransformer(nn.Module):
             cfg.geotransformer.sigma_a,
             cfg.geotransformer.angle_k,
             reduction_a=cfg.geotransformer.reduction_a,
+            semantic_transformer=True
         )
 
         self.coarse_target = SuperPointTargetGenerator(
@@ -94,24 +95,23 @@ class GeoTransformer(nn.Module):
         output_dict['ref_points'] = ref_points
         output_dict['src_points'] = src_points
         
-        if 'labels' in data_dict:
-            labels_c = data_dict['labels'][-1].detach()
-            labels_f = data_dict['labels'][1].detach()
-            labels = data_dict['labels'][0].detach()
-            
-            ref_labels_c = labels_c[:ref_length_c]
-            src_labels_c = labels_c[ref_length_c:]
-            ref_labels_f = labels_f[:ref_length_f]
-            src_labels_f = labels_f[ref_length_f:]
-            ref_labels = labels[:ref_length]
-            src_labels = labels[ref_length:]
-            
-            output_dict['ref_labels_c'] = ref_labels_c
-            output_dict['src_labels_c'] = src_labels_c
-            output_dict['ref_labels_f'] = ref_labels_f
-            output_dict['src_labels_f'] = src_labels_f
-            output_dict['ref_labels'] = ref_labels
-            output_dict['src_labels'] = src_labels
+        labels_c = data_dict['labels'][-1].detach()
+        labels_f = data_dict['labels'][1].detach()
+        labels = data_dict['labels'][0].detach()
+        
+        ref_labels_c = labels_c[:ref_length_c]
+        src_labels_c = labels_c[ref_length_c:]
+        ref_labels_f = labels_f[:ref_length_f]
+        src_labels_f = labels_f[ref_length_f:]
+        ref_labels = labels[:ref_length]
+        src_labels = labels[ref_length:]
+        
+        output_dict['ref_labels_c'] = ref_labels_c
+        output_dict['src_labels_c'] = src_labels_c
+        output_dict['ref_labels_f'] = ref_labels_f
+        output_dict['src_labels_f'] = src_labels_f
+        output_dict['ref_labels'] = ref_labels
+        output_dict['src_labels'] = src_labels
         
         print("ALL THE SHAPES")
         print(ref_points_c.shape, src_points_c.shape, ref_points_f.shape, src_points_f.shape, ref_points.shape, src_points.shape)
