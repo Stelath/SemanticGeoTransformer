@@ -47,7 +47,6 @@ class Tester(SingleTester):
         return output_dict
 
     def eval_step(self, iteration, data_dict, output_dict):
-        # print("data_dict:",data_dict)
         result_dict = self.evaluator(output_dict, data_dict)
         return result_dict
 

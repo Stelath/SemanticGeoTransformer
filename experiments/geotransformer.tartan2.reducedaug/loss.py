@@ -39,45 +39,10 @@ class CoarseMatchingLoss(nn.Module):
         return loss
 
 
-# class FineMatchingLoss(nn.Module):
-#     def __init__(self, cfg):
-#         super(FineMatchingLoss, self).__init__()
-#         self.positive_radius = cfg.fine_loss.positive_radius
-
-#     def forward(self, output_dict, data_dict):
-#         ref_node_corr_knn_points = output_dict['ref_node_corr_knn_points']
-#         src_node_corr_knn_points = output_dict['src_node_corr_knn_points']
-#         ref_node_corr_knn_masks = output_dict['ref_node_corr_knn_masks']
-#         src_node_corr_knn_masks = output_dict['src_node_corr_knn_masks']
-#         matching_scores = output_dict['matching_scores']
-#         transform = data_dict['transform']
-        
-#         print(len(ref_node_corr_knn_points))
-
-#         src_node_corr_knn_points = apply_transform(src_node_corr_knn_points, transform)
-#         dists = pairwise_distance(ref_node_corr_knn_points, src_node_corr_knn_points)  # (B, N, M)
-#         gt_masks = torch.logical_and(ref_node_corr_knn_masks.unsqueeze(2), src_node_corr_knn_masks.unsqueeze(1))
-#         gt_corr_map = torch.lt(dists, self.positive_radius ** 2)
-#         gt_corr_map = torch.logical_and(gt_corr_map, gt_masks)
-#         slack_row_labels = torch.logical_and(torch.eq(gt_corr_map.sum(2), 0), ref_node_corr_knn_masks)
-#         slack_col_labels = torch.logical_and(torch.eq(gt_corr_map.sum(1), 0), src_node_corr_knn_masks)
-
-#         labels = torch.zeros_like(matching_scores, dtype=torch.bool)
-#         labels[:, :-1, :-1] = gt_corr_map
-#         labels[:, :-1, -1] = slack_row_labels
-#         labels[:, -1, :-1] = slack_col_labels
-
-#         loss = -matching_scores[labels].mean()
-
-#         return loss
 class FineMatchingLoss(nn.Module):
     def __init__(self, cfg):
         super(FineMatchingLoss, self).__init__()
         self.positive_radius = cfg.fine_loss.positive_radius
-        self.num_labels = cfg.fine_loss.num_labels  # Total number of labels
-        self.weights_matrix = cfg.fine_loss.weights_matrix  # Shape: (num_labels, num_labels)
-        self.weights_unmatched_ref = cfg.fine_loss.weights_unmatched_ref  # Shape: (num_labels,)
-        self.weights_unmatched_src = cfg.fine_loss.weights_unmatched_src  # Shape: (num_labels,)
 
     def forward(self, output_dict, data_dict):
         ref_node_corr_knn_points = output_dict['ref_node_corr_knn_points']
@@ -87,61 +52,20 @@ class FineMatchingLoss(nn.Module):
         matching_scores = output_dict['matching_scores']
         transform = data_dict['transform']
 
-        # New label tensors
-        ref_node_corr_knn_points_labels = data_dict['ref_node_corr_knn_points_labels']
-        src_node_corr_knn_points_labels = data_dict['src_node_corr_knn_points_labels']
-
-        # Apply transformation
         src_node_corr_knn_points = apply_transform(src_node_corr_knn_points, transform)
-        dists = pairwise_distance(ref_node_corr_knn_points, src_node_corr_knn_points)
-        gt_masks = torch.logical_and(
-            ref_node_corr_knn_masks.unsqueeze(2), src_node_corr_knn_masks.unsqueeze(1)
-        )
+        dists = pairwise_distance(ref_node_corr_knn_points, src_node_corr_knn_points)  # (B, N, M)
+        gt_masks = torch.logical_and(ref_node_corr_knn_masks.unsqueeze(2), src_node_corr_knn_masks.unsqueeze(1))
         gt_corr_map = torch.lt(dists, self.positive_radius ** 2)
         gt_corr_map = torch.logical_and(gt_corr_map, gt_masks)
-        slack_row_labels = torch.logical_and(
-            torch.eq(gt_corr_map.sum(2), 0), ref_node_corr_knn_masks
-        )
-        slack_col_labels = torch.logical_and(
-            torch.eq(gt_corr_map.sum(1), 0), src_node_corr_knn_masks
-        )
+        slack_row_labels = torch.logical_and(torch.eq(gt_corr_map.sum(2), 0), ref_node_corr_knn_masks)
+        slack_col_labels = torch.logical_and(torch.eq(gt_corr_map.sum(1), 0), src_node_corr_knn_masks)
 
         labels = torch.zeros_like(matching_scores, dtype=torch.bool)
         labels[:, :-1, :-1] = gt_corr_map
         labels[:, :-1, -1] = slack_row_labels
         labels[:, -1, :-1] = slack_col_labels
 
-        # Initialize weights tensor
-        weights = torch.ones_like(matching_scores)
-
-        # For matched pairs
-        matched_mask = labels[:, :-1, :-1]
-        batch_indices, n_indices, m_indices = torch.nonzero(matched_mask, as_tuple=True)
-
-        ref_labels = ref_node_corr_knn_points_labels[batch_indices, n_indices]
-        src_labels = src_node_corr_knn_points_labels[batch_indices, m_indices]
-
-        match_weights = self.weights_matrix[ref_labels, src_labels]
-        weights[:, :-1, :-1][batch_indices, n_indices, m_indices] = match_weights
-
-        # For unmatched ref points
-        unmatched_ref_mask = labels[:, :-1, -1]
-        batch_indices_ref, n_indices_ref = torch.nonzero(unmatched_ref_mask, as_tuple=True)
-
-        ref_labels_unmatched = ref_node_corr_knn_points_labels[batch_indices_ref, n_indices_ref]
-        weights_unmatched_ref = self.weights_unmatched_ref[ref_labels_unmatched]
-        weights[:, :-1, -1][batch_indices_ref, n_indices_ref] = weights_unmatched_ref
-
-        # For unmatched src points
-        unmatched_src_mask = labels[:, -1, :-1]
-        batch_indices_src, m_indices_src = torch.nonzero(unmatched_src_mask, as_tuple=True)
-
-        src_labels_unmatched = src_node_corr_knn_points_labels[batch_indices_src, m_indices_src]
-        weights_unmatched_src = self.weights_unmatched_src[src_labels_unmatched]
-        weights[:, -1, :-1][batch_indices_src, m_indices_src] = weights_unmatched_src
-
-        # Compute the weighted loss
-        loss = -(matching_scores * weights)[labels].mean()
+        loss = -matching_scores[labels].mean()
 
         return loss
 

@@ -77,7 +77,6 @@ class KPConvFPN(nn.Module):
         feats_list = []
 
         points_list = data_dict['points']
-        labels_list = data_dict['labels']
         neighbors_list = data_dict['neighbors']
         subsampling_list = data_dict['subsampling']
         upsampling_list = data_dict['upsampling']

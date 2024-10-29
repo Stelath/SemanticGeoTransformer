@@ -1,4 +1,4 @@
-from geotransformer.datasets.registration.rellis.dataset import OdometryRellisPairDataset
+from geotransformer.datasets.registration.tartan_2.dataset import OdometryTartan2PairDataset
 from geotransformer.utils.data import (
     registration_collate_fn_stack_mode,
     calibrate_neighbors_stack_mode,
@@ -7,7 +7,7 @@ from geotransformer.utils.data import (
 
 
 def train_valid_data_loader(cfg, distributed):
-    train_dataset = OdometryRellisPairDataset(
+    train_dataset = OdometryTartan2PairDataset(
         cfg.data.dataset_root,
         'train',
         point_limit=cfg.train.point_limit,
@@ -17,7 +17,7 @@ def train_valid_data_loader(cfg, distributed):
         augmentation_max_scale=cfg.train.augmentation_max_scale,
         augmentation_shift=cfg.train.augmentation_shift,
         augmentation_rotation=cfg.train.augmentation_rotation,
-        semantic_labels=cfg.train.use_semantic_labels,
+        augmentation_z_priority_rotation=cfg.train.augmentation_z_priority_rotation,
     )
     neighbor_limits = calibrate_neighbors_stack_mode(
         train_dataset,
@@ -39,7 +39,7 @@ def train_valid_data_loader(cfg, distributed):
         distributed=distributed,
     )
 
-    valid_dataset = OdometryRellisPairDataset(
+    valid_dataset = OdometryTartan2PairDataset(
         cfg.data.dataset_root,
         'val',
         point_limit=cfg.test.point_limit,
@@ -62,7 +62,7 @@ def train_valid_data_loader(cfg, distributed):
 
 
 def test_data_loader(cfg):
-    train_dataset = OdometryRellisPairDataset(
+    train_dataset = OdometryTartan2PairDataset(
         cfg.data.dataset_root,
         'train',
         point_limit=cfg.train.point_limit,
@@ -72,7 +72,6 @@ def test_data_loader(cfg):
         augmentation_max_scale=cfg.train.augmentation_max_scale,
         augmentation_shift=cfg.train.augmentation_shift,
         augmentation_rotation=cfg.train.augmentation_rotation,
-        semantic_labels=cfg.train.use_semantic_labels,
     )
     neighbor_limits = calibrate_neighbors_stack_mode(
         train_dataset,
@@ -82,7 +81,7 @@ def test_data_loader(cfg):
         cfg.backbone.init_radius,
     )
 
-    test_dataset = OdometryRellisPairDataset(
+    test_dataset = OdometryTartan2PairDataset(
         cfg.data.dataset_root,
         'test',
         point_limit=cfg.test.point_limit,

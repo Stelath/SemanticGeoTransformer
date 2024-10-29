@@ -30,26 +30,25 @@ ensure_dir(_C.feature_dir)
 
 # data
 _C.data = edict()
-_C.data.dataset_root = osp.join(_C.root_dir, 'data', 'Rellis')
+_C.data.dataset_root = osp.join(_C.root_dir, 'data', 'tartan_drive_2')
 
 # train data
 _C.train = edict()
-_C.train.batch_size = 2
-_C.train.num_workers = 16
-_C.train.point_limit = 30000
+_C.train.batch_size = 1
+_C.train.num_workers = 8
+_C.train.point_limit = 5000
 _C.train.use_augmentation = True
 _C.train.augmentation_noise = 0.01
 _C.train.augmentation_min_scale = 0.8
 _C.train.augmentation_max_scale = 1.2
 _C.train.augmentation_shift = 2.0
 _C.train.augmentation_rotation = 1.0
-_C.train.use_semantic_labels = True
 
 # test config
 _C.test = edict()
 _C.test.batch_size = 1
 _C.test.num_workers = 8
-_C.test.point_limit = None
+_C.test.point_limit = 5000
 
 # eval config
 _C.eval = edict()
@@ -107,7 +106,7 @@ _C.geotransformer.input_dim = 2048
 _C.geotransformer.hidden_dim = 128
 _C.geotransformer.output_dim = 256
 _C.geotransformer.num_heads = 4
-_C.geotransformer.blocks = ['self', 'sem-self', 'sem-cross', 'cross', 'self', 'sem-self', 'sem-cross', 'cross', 'self', 'sem-self', 'sem-cross', 'cross']
+_C.geotransformer.blocks = ['self', 'cross', 'self', 'cross', 'self', 'cross']
 _C.geotransformer.sigma_d = 4.8
 _C.geotransformer.sigma_a = 15
 _C.geotransformer.angle_k = 3

@@ -34,7 +34,7 @@ _C.data.dataset_root = osp.join(_C.root_dir, 'data', 'Rellis')
 
 # train data
 _C.train = edict()
-_C.train.batch_size = 2
+_C.train.batch_size = 1
 _C.train.num_workers = 16
 _C.train.point_limit = 30000
 _C.train.use_augmentation = True
@@ -136,6 +136,29 @@ _C.coarse_loss.positive_overlap = 0.1
 # loss - Fine level
 _C.fine_loss = edict()
 _C.fine_loss.positive_radius = 0.6
+_C.fine_loss.num_labels = 15
+_C.fine_loss.weights_matrix = [
+    # void, grass, tree, pole, water, vehicle, log, person, fence, bush, concrete, barrier, puddle, mud, rubble
+    [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # void
+    [3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # grass
+    [3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # tree
+    [3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # pole
+    [3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # water
+    [3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3],  # vehicle
+    [3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3],  # log
+    [3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3],  # person
+    [3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3],  # fence
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3],  # bush
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3],  # concrete
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3],  # barrier
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3],  # puddle
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3],  # mud
+    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],  # rubble
+]  # Shape: (num_labels, num_labels)
+
+per_point_weight = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+_C.fine_loss.weights_unmatched_ref = per_point_weight  # Shape: (num_labels,)
+_C.fine_loss.weights_unmatched_src = per_point_weight
 
 # loss - Overall
 _C.loss = edict()

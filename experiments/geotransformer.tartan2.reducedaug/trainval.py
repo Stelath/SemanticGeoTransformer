@@ -10,6 +10,9 @@ from dataset import train_valid_data_loader
 from model import create_model
 from loss import OverallLoss, Evaluator
 
+import torch
+
+
 class Trainer(EpochBasedTrainer):
     def __init__(self, cfg):
         super().__init__(cfg, max_epoch=cfg.optim.max_epoch)
@@ -41,6 +44,8 @@ class Trainer(EpochBasedTrainer):
         loss_dict = self.loss_func(output_dict, data_dict)
         result_dict = self.evaluator(output_dict, data_dict)
         loss_dict.update(result_dict)
+
+        # print(f"Allocated memory: {torch.cuda.memory_allocated() / 1024 ** 2} MB")
         return output_dict, loss_dict
 
     def val_step(self, epoch, iteration, data_dict):

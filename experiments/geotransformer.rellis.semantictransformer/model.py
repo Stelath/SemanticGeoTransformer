@@ -113,8 +113,8 @@ class GeoTransformer(nn.Module):
         output_dict['ref_labels'] = ref_labels
         output_dict['src_labels'] = src_labels
         
-        print("ALL THE SHAPES")
-        print(ref_points_c.shape, src_points_c.shape, ref_points_f.shape, src_points_f.shape, ref_points.shape, src_points.shape)
+        # print("ALL THE SHAPES")
+        # print(ref_points_c.shape, src_points_c.shape, ref_points_f.shape, src_points_f.shape, ref_points.shape, src_points.shape)
 
 
         # 1. Generate ground truth node correspondences, include laebls if provided

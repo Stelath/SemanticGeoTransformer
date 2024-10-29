@@ -98,6 +98,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         if self.point_limit is not None and points.shape[0] > self.point_limit:
             indices = np.random.permutation(points.shape[0])[: self.point_limit]
             points = points[indices]
+        points = points[:, :3]
         return points
     
     def _load_semantic_point_cloud(self, file_name):
@@ -114,9 +115,7 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         data_dict['seq_id'] = metadata['seq_id']
         data_dict['ref_frame'] = metadata['frame0']
         data_dict['src_frame'] = metadata['frame1']
-
-       
-
+        
         if not self.semantic_labels:
             ref_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
             src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
@@ -128,8 +127,6 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
             src_labes = src_points[:, 3]
             ref_points = ref_points[:, :3]
             src_points = src_points[:, :3]
-
-        print("num points: ", ref_points.shape[0], src_points.shape[0])
         
         transform = metadata['transform']
         
@@ -147,9 +144,9 @@ class OdometryRellisPairDataset(torch.utils.data.Dataset):
         data_dict['transform'] = transform.astype(np.float32)
         
         if self.semantic_labels:
-            data_dict['ref_labels'] = ref_labels.astype(np.uint16)
-            data_dict['src_labels'] = src_labes.astype(np.uint16)
-        
+            data_dict['ref_labels'] = ref_labels.astype(np.int16)
+            data_dict['src_labels'] = src_labes.astype(np.int16)
+            
         return data_dict
 
     def __len__(self):
