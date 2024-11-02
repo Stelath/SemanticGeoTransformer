@@ -17,9 +17,9 @@ def process_sequences(sequences, sequences_dir, args):
         gt_transforms = pd.read_csv(os.path.join(sequences_dir, sequence, 'poses.txt'), header=None, sep=' ')
         
         # Select a starting point every 20 frames and pair with the pose 200 frames ahead
-        for starting_index in range(0, len(gt_transforms) - 8, 32):  # Ensure frame1 does not go out of range
+        for starting_index in range(0, len(gt_transforms) - 200, 20):  # Ensure frame1 does not go out of range
             p1_name = starting_index
-            p2_name = starting_index + 8  # Each pair is 200 frames apart
+            p2_name = starting_index + 200  # Each pair is 200 frames apart
             
             # Generate the corresponding point cloud file names and paths
             pcd1 = os.path.join('downsampled', sequence, str(p1_name).zfill(6) + '.npy')
@@ -65,9 +65,9 @@ def main(args):
     sequences_dir = os.path.join(args.dataset, 'sequences')
     
     # Split the dataset into training, validation, and test sets
-    train_sequences = ['00', '01', '02']
-    val_sequences = ['03']
-    test_sequences = ['04']
+    train_sequences = ['00000', '00001', '00002']
+    val_sequences = ['00003']
+    test_sequences = ['00004']
     
     print(f'Training sequences: {train_sequences}')
     print(f'Validation sequence: {val_sequences}')

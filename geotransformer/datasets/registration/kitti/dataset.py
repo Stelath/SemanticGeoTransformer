@@ -33,6 +33,7 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
         augmentation_rotation=1.0,
         return_corr_indices=False,
         matching_radius=None,
+        semantic_labels=False,  # Passes semantic data alongside 3D point cloud data
     ):
         super(OdometryKittiPairDataset, self).__init__()
 
@@ -46,6 +47,7 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
         self.augmentation_max_scale = augmentation_max_scale
         self.augmentation_shift = augmentation_shift
         self.augmentation_rotation = augmentation_rotation
+        self.semantic_labels = semantic_labels
 
         self.return_corr_indices = return_corr_indices
         self.matching_radius = matching_radius
@@ -90,6 +92,13 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
             indices = np.random.permutation(points.shape[0])[: self.point_limit]
             points = points[indices]
         return points
+    
+    def _load_semantic_point_cloud(self, file_name):
+        points = np.load(file_name)
+        if self.point_limit is not None and points.shape[0] > self.point_limit:
+            indices = np.random.permutation(points.shape[0])[: self.point_limit]
+            points = points[indices]
+        return points
 
     def __getitem__(self, index):
         data_dict = {}
@@ -99,8 +108,18 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
         data_dict['ref_frame'] = metadata['frame0']
         data_dict['src_frame'] = metadata['frame1']
 
-        ref_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
-        src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
+        if not self.semantic_labels:
+            ref_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
+            src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
+        else:
+            ref_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
+            src_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
+            
+            ref_labels = ref_points[:, 3]
+            src_labes = src_points[:, 3]
+            ref_points = ref_points[:, :3]
+            src_points = src_points[:, :3]
+        
         transform = metadata['transform']
 
         if self.use_augmentation:
@@ -116,6 +135,10 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
         data_dict['src_feats'] = np.ones((src_points.shape[0], 1), dtype=np.float32)
         data_dict['transform'] = transform.astype(np.float32)
 
+        if self.semantic_labels:
+            data_dict['ref_labels'] = ref_labels.astype(np.int16)
+            data_dict['src_labels'] = src_labes.astype(np.int16)
+        
         return data_dict
 
     def __len__(self):

@@ -93,6 +93,7 @@ _C.model = edict()
 _C.model.ground_truth_matching_radius = 0.6
 _C.model.num_points_in_patch = 128
 _C.model.num_sinkhorn_iterations = 100
+_C.model.num_labels = 15
 
 # model - Coarse Matching
 _C.coarse_matching = edict()

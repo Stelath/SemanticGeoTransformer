@@ -158,10 +158,10 @@ class GeometricTransformer(nn.Module):
             ref_feats, src_feats = self.transformer(
                 ref_feats,
                 src_feats,
+                ref_sem,
+                src_sem,
                 ref_embeddings,
                 src_embeddings,
-                ref_sem=ref_sem,
-                src_sem=src_sem,
                 masks0=ref_masks,
                 masks1=src_masks,
             )

@@ -94,10 +94,15 @@ class GeoTransformer(nn.Module):
         output_dict['ref_points'] = ref_points
         output_dict['src_points'] = src_points
         
+        print("LABELS IN DATA DICT:", 'labels' in data_dict)
+        
         if 'labels' in data_dict:
-            labels_c = data_dict['labels'][-1].detach()
-            labels_f = data_dict['labels'][1].detach()
-            labels = data_dict['labels'][0].detach()
+            labels_c = data_dict['labels'][-1].detach().unsqueeze(-1)
+            labels_f = data_dict['labels'][1].detach().unsqueeze(-1)
+            labels = data_dict['labels'][0].detach().unsqueeze(-1)
+            
+            print("SHAPES FOR LABELS")
+            print(labels_c.shape, labels_f.shape, labels.shape)
             
             ref_labels_c = labels_c[:ref_length_c]
             src_labels_c = labels_c[ref_length_c:]
@@ -115,6 +120,7 @@ class GeoTransformer(nn.Module):
         
         print("ALL THE SHAPES")
         print(ref_points_c.shape, src_points_c.shape, ref_points_f.shape, src_points_f.shape, ref_points.shape, src_points.shape)
+        print(labels_c.shape, labels_f.shape, labels.shape, ref_labels_c.shape, src_labels_c.shape, ref_labels_f.shape, src_labels_f.shape, ref_labels.shape, src_labels.shape)
 
 
         # 1. Generate ground truth node correspondences, include laebls if provided
@@ -135,7 +141,12 @@ class GeoTransformer(nn.Module):
             src_padded_labels_f = torch.cat([src_labels_f, torch.zeros_like(src_labels_f[:1])], dim=0)
             ref_node_knn_labels = index_select(ref_padded_labels_f, ref_node_knn_indices, dim=0)
             src_node_knn_labels = index_select(src_padded_labels_f, src_node_knn_indices, dim=0)
-            
+        
+        print("SHAPES FOR PADDED LABELS")
+        print(ref_padded_labels_f.shape, src_padded_labels_f.shape, ref_node_knn_labels.shape, src_node_knn_labels.shape)
+        
+        print("SHAPES FOR PADDED POINTS")
+        print(ref_padded_points_f.shape, src_padded_points_f.shape, ref_node_knn_points.shape, src_node_knn_points.shape)
 
         gt_node_corr_indices, gt_node_corr_overlaps = get_node_correspondences(
             ref_points_c,
@@ -214,10 +225,36 @@ class GeoTransformer(nn.Module):
         output_dict['src_node_corr_knn_masks'] = src_node_corr_knn_masks
         
         if 'labels' in data_dict:
-            ref_node_corr_knn_points_labels = ref_node_knn_labels[ref_node_corr_knn_indices]  # (P, K)
-            src_node_corr_knn_points_labels = src_node_knn_labels[src_node_corr_knn_indices]  # (P, K)
+            ref_node_corr_knn_points_labels = ref_node_knn_labels[ref_node_corr_indices]  # (P, K)
+            src_node_corr_knn_points_labels = src_node_knn_labels[ref_node_corr_indices]  # (P, K)
             output_dict['ref_node_corr_knn_points_labels'] = ref_node_corr_knn_points_labels
             output_dict['src_node_corr_knn_points_labels'] = src_node_corr_knn_points_labels
+        
+        ref_node_corr_knn_indices = ref_node_knn_indices[ref_node_corr_indices]  # (P, K)
+        src_node_corr_knn_indices = src_node_knn_indices[src_node_corr_indices]  # (P, K)
+
+        # Debugging statements
+        ref_padded_feats_f_size = ref_padded_feats_f.size(0)
+        src_padded_feats_f_size = src_padded_feats_f.size(0)
+        ref_indices_max = ref_node_corr_knn_indices.max()
+        ref_indices_min = ref_node_corr_knn_indices.min()
+        src_indices_max = src_node_corr_knn_indices.max()
+        src_indices_min = src_node_corr_knn_indices.min()
+
+        print(f"ref_padded_feats_f size: {ref_padded_feats_f_size}")
+        print(f"ref_node_corr_knn_indices max: {ref_indices_max}, min: {ref_indices_min}")
+        print(f"src_padded_feats_f size: {src_padded_feats_f_size}")
+        print(f"src_node_corr_knn_indices max: {src_indices_max}, min: {src_indices_min}")
+
+        assert ref_indices_max < ref_padded_feats_f_size, "ref_node_corr_knn_indices contains out-of-bounds indices."
+        assert ref_indices_min >= 0, "ref_node_corr_knn_indices contains negative indices."
+        assert src_indices_max < src_padded_feats_f_size, "src_node_corr_knn_indices contains out-of-bounds indices."
+        assert src_indices_min >= 0, "src_node_corr_knn_indices contains negative indices."
+
+        # Proceed with index_select after checks
+        ref_node_corr_knn_feats = index_select(ref_padded_feats_f, ref_node_corr_knn_indices, dim=0)  # (P, K, C)
+        src_node_corr_knn_feats = index_select(src_padded_feats_f, src_node_corr_knn_indices, dim=0)  # (P, K, C)
+        
 
         # 8. Optimal transport
         matching_scores = torch.einsum('bnd,bmd->bnm', ref_node_corr_knn_feats, src_node_corr_knn_feats)  # (P, K, K)

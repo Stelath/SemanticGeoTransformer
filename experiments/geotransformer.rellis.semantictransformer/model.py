@@ -21,8 +21,20 @@ class GeoTransformer(nn.Module):
         super(GeoTransformer, self).__init__()
         self.num_points_in_patch = cfg.model.num_points_in_patch
         self.matching_radius = cfg.model.ground_truth_matching_radius
+        
+        self.label_embeddings = nn.Embedding(cfg.model.num_labels, cfg.backbone.input_dim)
 
-        self.backbone = KPConvFPN(
+        self.geo_backbone = KPConvFPN(
+            cfg.backbone.input_dim,
+            cfg.backbone.output_dim,
+            cfg.backbone.init_dim,
+            cfg.backbone.kernel_size,
+            cfg.backbone.init_radius,
+            cfg.backbone.init_sigma,
+            cfg.backbone.group_norm,
+        )
+        
+        self.sem_backbone = KPConvFPN(
             cfg.backbone.input_dim,
             cfg.backbone.output_dim,
             cfg.backbone.init_dim,
@@ -70,7 +82,6 @@ class GeoTransformer(nn.Module):
     def forward(self, data_dict):
         output_dict = {}
 
-        # Downsample point clouds
         feats = data_dict['features'].detach()
         transform = data_dict['transform'].detach()
 
@@ -95,9 +106,9 @@ class GeoTransformer(nn.Module):
         output_dict['ref_points'] = ref_points
         output_dict['src_points'] = src_points
         
-        labels_c = data_dict['labels'][-1].detach()
-        labels_f = data_dict['labels'][1].detach()
-        labels = data_dict['labels'][0].detach()
+        labels_c = data_dict['labels'][-1].detach().unsqueeze(-1)
+        labels_f = data_dict['labels'][1].detach().unsqueeze(-1)
+        labels = data_dict['labels'][0].detach().unsqueeze(-1)
         
         ref_labels_c = labels_c[:ref_length_c]
         src_labels_c = labels_c[ref_length_c:]
@@ -130,11 +141,10 @@ class GeoTransformer(nn.Module):
         ref_node_knn_points = index_select(ref_padded_points_f, ref_node_knn_indices, dim=0)
         src_node_knn_points = index_select(src_padded_points_f, src_node_knn_indices, dim=0)
         
-        if 'labels' in data_dict:
-            ref_padded_labels_f = torch.cat([ref_labels_f, torch.zeros_like(ref_labels_f[:1])], dim=0)
-            src_padded_labels_f = torch.cat([src_labels_f, torch.zeros_like(src_labels_f[:1])], dim=0)
-            ref_node_knn_labels = index_select(ref_padded_labels_f, ref_node_knn_indices, dim=0)
-            src_node_knn_labels = index_select(src_padded_labels_f, src_node_knn_indices, dim=0)
+        ref_padded_labels_f = torch.cat([ref_labels_f, torch.zeros_like(ref_labels_f[:1])], dim=0)
+        src_padded_labels_f = torch.cat([src_labels_f, torch.zeros_like(src_labels_f[:1])], dim=0)
+        ref_node_knn_labels = index_select(ref_padded_labels_f, ref_node_knn_indices, dim=0)
+        src_node_knn_labels = index_select(src_padded_labels_f, src_node_knn_indices, dim=0)
             
 
         gt_node_corr_indices, gt_node_corr_overlaps = get_node_correspondences(
@@ -154,19 +164,36 @@ class GeoTransformer(nn.Module):
         output_dict['gt_node_corr_overlaps'] = gt_node_corr_overlaps
 
         # 2. KPFCNN Encoder
-        feats_list = self.backbone(feats, data_dict)
+        label_feats = self.label_embeddings(labels.long()).view(-1, 1)
+        
+        # print("FEATS SHAPES")
+        # print(feats.shape, label_feats.shape, feats.dtype, label_feats.dtype)
+        
+        feats_list = self.geo_backbone(feats, data_dict)
+        sem_feats_list = self.sem_backbone(label_feats, data_dict)
 
         feats_c = feats_list[-1]
         feats_f = feats_list[0]
+        
+        sem_feats_c = sem_feats_list[-1]
+        sem_feats_f = sem_feats_list[0]
+        
+        # print("FEATS SHAPES")
+        # print(feats_c.shape, feats_f.shape, feats_c.dtype, feats_f.dtype)
+        # print(sem_feats_c.shape, sem_feats_f.shape, sem_feats_c.dtype, sem_feats_f.dtype)
 
         # 3. Conditional Transformer
         ref_feats_c = feats_c[:ref_length_c]
         src_feats_c = feats_c[ref_length_c:]
+        ref_sem_feats_c = sem_feats_c[:ref_length_c]
+        src_sem_feats_c = sem_feats_c[ref_length_c:]
         ref_feats_c, src_feats_c = self.transformer(
             ref_points_c.unsqueeze(0),
             src_points_c.unsqueeze(0),
             ref_feats_c.unsqueeze(0),
             src_feats_c.unsqueeze(0),
+            ref_sem=ref_sem_feats_c.unsqueeze(0),
+            src_sem=src_sem_feats_c.unsqueeze(0),
         )
         ref_feats_c_norm = F.normalize(ref_feats_c.squeeze(0), p=2, dim=1)
         src_feats_c_norm = F.normalize(src_feats_c.squeeze(0), p=2, dim=1)

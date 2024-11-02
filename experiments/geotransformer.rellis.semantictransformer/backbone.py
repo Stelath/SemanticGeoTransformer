@@ -8,6 +8,7 @@ class KPConvFPN(nn.Module):
     def __init__(self, input_dim, output_dim, init_dim, kernel_size, init_radius, init_sigma, group_norm):
         super(KPConvFPN, self).__init__()
 
+        # Positional Encoder
         self.encoder1_1 = ConvBlock(input_dim, init_dim, kernel_size, init_radius, init_sigma, group_norm)
         self.encoder1_2 = ResidualBlock(init_dim, init_dim * 2, kernel_size, init_radius, init_sigma, group_norm)
 
@@ -75,9 +76,7 @@ class KPConvFPN(nn.Module):
 
     def forward(self, feats, data_dict):
         feats_list = []
-
         points_list = data_dict['points']
-        labels_list = data_dict['labels']
         neighbors_list = data_dict['neighbors']
         subsampling_list = data_dict['subsampling']
         upsampling_list = data_dict['upsampling']

@@ -88,8 +88,8 @@ class FineMatchingLoss(nn.Module):
         transform = data_dict['transform']
 
         # New label tensors
-        ref_node_corr_knn_points_labels = data_dict['ref_node_corr_knn_points_labels']
-        src_node_corr_knn_points_labels = data_dict['src_node_corr_knn_points_labels']
+        ref_node_corr_knn_points_labels = output_dict['ref_node_corr_knn_points_labels']
+        src_node_corr_knn_points_labels = output_dict['src_node_corr_knn_points_labels']
 
         # Apply transformation
         src_node_corr_knn_points = apply_transform(src_node_corr_knn_points, transform)

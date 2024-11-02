@@ -7,7 +7,7 @@ from geotransformer.modules.transformer.vanilla_transformer import TransformerLa
 
 
 def _check_block_type(block):
-    if block not in ['self', 'cross']:
+    if block not in ['self', 'cross', 'sem-self', 'sem-cross']:
         raise ValueError('Unsupported block type "{}".'.format(block))
 
 
@@ -128,7 +128,7 @@ class SSRPEConditionalTransformer(nn.Module):
         return_attention_scores=False,
         parallel=False,
     ):
-        super(RPEConditionalTransformer, self).__init__()
+        super(SSRPEConditionalTransformer, self).__init__()
         self.blocks = blocks
         layers = []
         for block in self.blocks:
