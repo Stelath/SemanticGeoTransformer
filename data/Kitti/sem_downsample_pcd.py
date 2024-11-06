@@ -176,7 +176,7 @@ def main():
     num_cores = 16 #multiprocessing.cpu_count()
     pool = multiprocessing.Pool(num_cores)
     
-    for i in range(5):
+    for i in range(22):
         seq_id = '{:02d}'.format(i)
         file_names = sorted(glob.glob(osp.join('sequences', seq_id, 'velodyne', '*.bin')))
         label_names = sorted(glob.glob(osp.join('sequences', seq_id, 'labels', '*.label')))
