@@ -88,6 +88,14 @@ def precompute_data_stack_mode(points, lengths, num_stages, voxel_size, radius, 
     if len(lengths_list) > 1:
         out['labels'] = labels_list
     
+    # First stage point spread i.e. min x vs max x, min y vs max y, min z vs max z
+    # print("First stage min and max x: ", points_list[0][:, 0].min(), points_list[0][:, 0].max())
+    # print("First stage min and max y: ", points_list[0][:, 1].min(), points_list[0][:, 1].max())
+    # print("First stage min and max z: ", points_list[0][:, 2].min(), points_list[0][:, 2].max())
+    # print("number of points at each stage: ", [len(points) for points in points_list])
+    # print("number of lengths at each stage: ", [len(lengths) for lengths in lengths_list])
+    # print("number of neighbors at each stage: ", [len(neighbors) for neighbors in neighbors_list])
+    # exit(1)
     return out
 
 
@@ -142,6 +150,7 @@ def single_collate_fn_stack_mode(
     collated_dict['features'] = feats
     
     if filter_ground_plane:
+        raise NotImplementedError("Trying to filter ground plane, we don't do this experiment any more, this should never happen")
         points = remove_ground_plane(points, std_dev_threshold=1.0)
     
     if precompute_data:                                                                                                   # Commented out by Ethan b/c wanted to run Tartan and this was erring

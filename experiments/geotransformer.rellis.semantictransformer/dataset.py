@@ -44,6 +44,7 @@ def train_valid_data_loader(cfg, distributed):
         'val',
         point_limit=cfg.test.point_limit,
         use_augmentation=False,
+        semantic_labels=cfg.train.use_semantic_labels,
     )
     valid_loader = build_dataloader_stack_mode(
         valid_dataset,
@@ -87,6 +88,7 @@ def test_data_loader(cfg):
         'test',
         point_limit=cfg.test.point_limit,
         use_augmentation=False,
+        semantic_labels=cfg.train.use_semantic_labels
     )
     test_loader = build_dataloader_stack_mode(
         test_dataset,

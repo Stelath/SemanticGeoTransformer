@@ -111,6 +111,8 @@ class OdometryKittiPairDataset(torch.utils.data.Dataset):
         if not self.semantic_labels:
             ref_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
             src_points = self._load_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))
+            ref_points = ref_points[:, :3]
+            src_points = src_points[:, :3]
         else:
             ref_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd0']))
             src_points = self._load_semantic_point_cloud(osp.join(self.dataset_root, metadata['pcd1']))

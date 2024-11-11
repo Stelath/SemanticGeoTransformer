@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from geotransformer.modules.ops import pairwise_distance
-from geotransformer.modules.transformer import SinusoidalPositionalEmbedding, RPEConditionalTransformer, SSRPEConditionalTransformer
+from geotransformer.modules.transformer import SinusoidalPositionalEmbedding, RPEConditionalTransformer, SSRPEConditionalTransformer, SSARPEConditionalTransformer
 
 
 class GeometricStructureEmbedding(nn.Module):
@@ -86,7 +86,7 @@ class GeometricTransformer(nn.Module):
         dropout=None,
         activation_fn='ReLU',
         reduction_a='max',
-        semantic_transformer=False,
+        model_type='GeometricTransformer',
     ):
         r"""Geometric Transformer (GeoTransformer).
 
@@ -101,22 +101,31 @@ class GeometricTransformer(nn.Module):
             angle_k: number of nearest neighbors for angular embedding
             activation_fn: activation function
             reduction_a: reduction mode of angular embedding ['max', 'mean']
+            model_type: model type ['GeometricTransformer', 'SemanticTransformer']
         """
         super(GeometricTransformer, self).__init__()
-        self.semantic_transformer = semantic_transformer
+        self.model_type = model_type
 
         self.embedding = GeometricStructureEmbedding(hidden_dim, sigma_d, sigma_a, angle_k, reduction_a=reduction_a)
 
         self.in_proj = nn.Linear(input_dim, hidden_dim)
-        if self.semantic_transformer:
+        if self.model_type == 'SemanticSepAttnTransformer':
             self.sem_in_proj = nn.Linear(input_dim, hidden_dim)
             self.transformer = SSRPEConditionalTransformer(
                 blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
             )
-        else:
+        elif self.model_type == 'SemanticSingleAttnTransformer':
+            self.sem_in_proj = nn.Linear(input_dim, hidden_dim)
+            self.transformer = SSARPEConditionalTransformer(
+                blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
+            )
+        elif self.model_type == 'GeometricTransformer':
             self.transformer = RPEConditionalTransformer(
                 blocks, hidden_dim, num_heads, dropout=dropout, activation_fn=activation_fn
             )
+        else:
+            raise ValueError(f'Unsupported model type: {self.model_type}.')
+        
         self.out_proj = nn.Linear(hidden_dim, output_dim)
 
     def forward(
@@ -150,11 +159,10 @@ class GeometricTransformer(nn.Module):
         ref_feats = self.in_proj(ref_feats)
         src_feats = self.in_proj(src_feats)
         
-        if self.semantic_transformer:
+        if self.model_type == 'SemanticSepAttnTransformer' or self.model_type == 'SemanticSingleAttnTransformer':
             ref_sem = self.in_proj(ref_sem)
             src_sem = self.in_proj(src_sem)
 
-        if self.semantic_transformer:
             ref_feats, src_feats = self.transformer(
                 ref_feats,
                 src_feats,
@@ -165,7 +173,7 @@ class GeometricTransformer(nn.Module):
                 masks0=ref_masks,
                 masks1=src_masks,
             )
-        else:
+        elif self.model_type == 'GeometricTransformer':
             ref_feats, src_feats = self.transformer(
                 ref_feats,
                 src_feats,

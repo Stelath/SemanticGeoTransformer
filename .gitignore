@@ -20,6 +20,7 @@ data/**/*.jpg
 data/**/*.zip
 data/**/*.label
 
+
 gif_temp/*
 
 *.bag
@@ -36,3 +37,6 @@ output202408/*
 *.out
 
 data/tartan_drive_2/sequences/*
+
+*.slurm
+*.sh

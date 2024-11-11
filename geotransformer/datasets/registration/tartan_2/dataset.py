@@ -69,7 +69,9 @@ class OdometryTartan2PairDataset(torch.utils.data.Dataset):
         if self.return_corr_indices and self.matching_radius is None:
             raise ValueError('"matching_radius" is None but "return_corr_indices" is set.')
 
-        self.metadata = load_pickle(osp.join(self.dataset_root, 'metadata', f'{subset}.pkl'))
+        self.metadata = load_pickle(osp.join(self.dataset_root, f'{subset}.pkl'))
+        self.metadata_info = open(osp.join(self.dataset_root, f'metadata.info')).readlines()
+        print("Metadata info: ", self.metadata_info)
         # Only keep the first 200 pairs for debugging
         # self.metadata = self.metadata[:200]
 

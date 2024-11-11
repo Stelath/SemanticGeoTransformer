@@ -4,7 +4,7 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 setup(
     name='geotransformer',
-    version='1.0.0',
+    version='1.1.0',
     ext_modules=[
         CUDAExtension(
             name='geotransformer.ext',
@@ -12,6 +12,8 @@ setup(
                 'geotransformer/extensions/extra/cloud/cloud.cpp',
                 'geotransformer/extensions/cpu/grid_subsampling/grid_subsampling.cpp',
                 'geotransformer/extensions/cpu/grid_subsampling/grid_subsampling_cpu.cpp',
+                'geotransformer/extensions/cpu/grid_subsampling_with_labels/grid_subsampling_with_labels.cpp',
+                'geotransformer/extensions/cpu/grid_subsampling_with_labels/grid_subsampling_with_labels_cpu.cpp',
                 'geotransformer/extensions/cpu/radius_neighbors/radius_neighbors.cpp',
                 'geotransformer/extensions/cpu/radius_neighbors/radius_neighbors_cpu.cpp',
                 'geotransformer/extensions/pybind.cpp',

@@ -12,15 +12,21 @@ _C = edict()
 # random seed
 _C.seed = 42
 
+# data
+_C.data = edict()
+_C.data.metadata_name = "metadataNamespace(max_spacing_m=1.2, max_xyz_mag=100, min_spacing_m=.8, plot_sequences=False, spacing=8)"
+
 # dirs
 _C.working_dir = osp.dirname(osp.realpath(__file__))
 _C.root_dir = osp.dirname(osp.dirname(_C.working_dir))
 _C.exp_name = osp.basename(_C.working_dir)
 _C.output_dir = osp.join(_C.root_dir, 'output', _C.exp_name)
-_C.snapshot_dir = osp.join(_C.output_dir, 'snapshots')
+_C.snapshot_dir = osp.join(_C.output_dir, 'snapshots', _C.data.metadata_name)
 _C.log_dir = osp.join(_C.output_dir, 'logs')
 _C.event_dir = osp.join(_C.output_dir, 'events')
 _C.feature_dir = osp.join(_C.output_dir, 'features')
+
+_C.data.dataset_root = osp.join(_C.root_dir, 'data', 'tartan_drive_2', _C.data.metadata_name)
 
 ensure_dir(_C.output_dir)
 ensure_dir(_C.snapshot_dir)
@@ -28,15 +34,13 @@ ensure_dir(_C.log_dir)
 ensure_dir(_C.event_dir)
 ensure_dir(_C.feature_dir)
 
-# data
-_C.data = edict()
-_C.data.dataset_root = osp.join(_C.root_dir, 'data', 'tartan_drive_2')
+
 
 # train data
 _C.train = edict()
 _C.train.batch_size = 1
 _C.train.num_workers = 8
-_C.train.point_limit = 5000
+_C.train.point_limit = 20000
 _C.train.use_augmentation = True
 _C.train.augmentation_noise = 0.01
 _C.train.augmentation_min_scale = 0.8
@@ -48,7 +52,7 @@ _C.train.augmentation_rotation = 1.0
 _C.test = edict()
 _C.test.batch_size = 1
 _C.test.num_workers = 8
-_C.test.point_limit = 10000
+_C.test.point_limit = 20000
 
 # eval config
 _C.eval = edict()

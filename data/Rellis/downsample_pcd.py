@@ -125,8 +125,8 @@ def main():
     
     for i in range(5):
         seq_id = '{:02d}'.format(i)
-        file_names = sorted(glob.glob(osp.join('sequences', seq_id, 'vel_cloud_node_kitti_bin', '*.bin')))
-        label_names = sorted(glob.glob(osp.join('sequences', seq_id, 'vel_cloud_node_semantickitti_label_id', '*.label')))
+        file_names = sorted(glob.glob(osp.join('sequences', seq_id, 'os1_cloud_node_kitti_bin', '*.bin')))
+        label_names = sorted(glob.glob(osp.join('sequences', seq_id, 'os1_cloud_node_semantickitti_label_id', '*.label')))
         
         args = []
         for j, file_name in enumerate(file_names):

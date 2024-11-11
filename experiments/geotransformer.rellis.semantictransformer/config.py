@@ -34,7 +34,7 @@ _C.data.dataset_root = osp.join(_C.root_dir, 'data', 'Rellis')
 
 # train data
 _C.train = edict()
-_C.train.batch_size = 2
+_C.train.batch_size = 1
 _C.train.num_workers = 16
 _C.train.point_limit = 30000
 _C.train.use_augmentation = True
@@ -109,10 +109,12 @@ _C.geotransformer.hidden_dim = 128
 _C.geotransformer.output_dim = 256
 _C.geotransformer.num_heads = 4
 _C.geotransformer.blocks = ['self', 'sem-self', 'sem-cross', 'cross', 'self', 'sem-self', 'sem-cross', 'cross', 'self', 'sem-self', 'sem-cross', 'cross']
+# _C.geotransformer.blocks = ['self', 'cross', 'self', 'cross', 'self', 'cross']
 _C.geotransformer.sigma_d = 4.8
 _C.geotransformer.sigma_a = 15
 _C.geotransformer.angle_k = 3
 _C.geotransformer.reduction_a = 'max'
+_C.geotransformer.model_type = 'SemanticSepAttnTransformer'
 
 # model - Fine Matching
 _C.fine_matching = edict()
