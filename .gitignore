@@ -40,3 +40,5 @@ data/tartan_drive_2/sequences/*
 
 *.slurm
 *.sh
+
+cvpr_output_ours/*
